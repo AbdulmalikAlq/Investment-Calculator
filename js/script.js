@@ -147,11 +147,179 @@ class InvestmentCalculator {    constructor() {
     }
 }
 
-let calculator;
-document.addEventListener('DOMContentLoaded', () => {
-    calculator = new InvestmentCalculator();
+// Theme management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
 });
 
-function calculate() {
-    calculator.calculate();
+// Settings management
+function saveSettings() {
+    const settings = {
+        initial: document.getElementById('initial').value,
+        initialPrice: document.getElementById('initialPrice').value,
+        dividend: document.getElementById('dividend').value,
+        growth: document.getElementById('growth').value,
+        monthlyAddition: document.getElementById('monthlyAddition').value,
+        startYear: document.getElementById('startYear').value,
+        years: document.getElementById('years').value
+    };
+    localStorage.setItem('calculatorSettings', JSON.stringify(settings));
+    alert('تم حفظ الإعدادات بنجاح');
 }
+
+function loadSettings() {
+    const savedSettings = localStorage.getItem('calculatorSettings');
+    if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        Object.entries(settings).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.value = value;
+        });
+    }
+}
+
+function resetSettings() {
+    document.getElementById('initial').value = '180880';
+    document.getElementById('initialPrice').value = '25';
+    document.getElementById('dividend').value = '1.8216';
+    document.getElementById('growth').value = '3';
+    document.getElementById('monthlyAddition').value = '1000';
+    document.getElementById('startYear').value = '6';
+    document.getElementById('years').value = '15';
+    localStorage.removeItem('calculatorSettings');
+    alert('تم إعادة تعيين الإعدادات');
+}
+
+// Investment calculations
+function formatNumber(number) {
+    return new Intl.NumberFormat('ar-SA').format(number.toFixed(2));
+}
+
+function calculate() {
+    const initial = parseFloat(document.getElementById('initial').value);
+    const initialPrice = parseFloat(document.getElementById('initialPrice').value);
+    const dividend = parseFloat(document.getElementById('dividend').value);
+    const growth = parseFloat(document.getElementById('growth').value) / 100;
+    const monthlyAddition = parseFloat(document.getElementById('monthlyAddition').value);
+    const startYear = parseInt(document.getElementById('startYear').value);
+    const years = parseInt(document.getElementById('years').value);
+
+    let initialShares = initial / initialPrice;
+    let yearlyData = [];
+    let currentValue = initial;
+    let totalDividends = 0;
+    let totalInvestment = initial;
+
+    for (let year = 1; year <= years; year++) {
+        const yearPrice = initialPrice * Math.pow(1 + growth, year);
+        const yearDividend = dividend * initialShares;
+        totalDividends += yearDividend;
+
+        if (year >= startYear) {
+            const yearlyAddition = monthlyAddition * 12;
+            totalInvestment += yearlyAddition;
+            initialShares += yearlyAddition / yearPrice;
+        }
+
+        currentValue = initialShares * yearPrice;
+
+        yearlyData.push({
+            year,
+            value: currentValue,
+            dividends: yearDividend,
+            shares: initialShares,
+            price: yearPrice
+        });
+    }
+
+    displayResults(yearlyData, totalInvestment, totalDividends);
+    updateCharts(yearlyData);
+}
+
+function displayResults(yearlyData, totalInvestment, totalDividends) {
+    const lastYear = yearlyData[yearlyData.length - 1];
+    const totalReturn = ((lastYear.value - totalInvestment) / totalInvestment * 100).toFixed(2);
+
+    const resultHTML = `
+        <h3>نتائج الاستثمار</h3>
+        <div style="margin-top: 1rem;">
+            <p>إجمالي الاستثمار: ${formatNumber(totalInvestment)} ريال</p>
+            <p>القيمة النهائية: ${formatNumber(lastYear.value)} ريال</p>
+            <p>عدد الأسهم النهائي: ${formatNumber(lastYear.shares)}</p>
+            <p>سعر السهم النهائي: ${formatNumber(lastYear.price)} ريال</p>
+            <p>إجمالي الأرباح الموزعة: ${formatNumber(totalDividends)} ريال</p>
+            <p>العائد الإجمالي: ${totalReturn}%</p>
+        </div>
+    `;
+
+    document.getElementById('result').innerHTML = resultHTML;
+}
+
+function updateCharts(yearlyData) {
+    // Investment Growth Chart
+    const investmentCtx = document.getElementById('investmentChart').getContext('2d');
+    new Chart(investmentCtx, {
+        type: 'line',
+        data: {
+            labels: yearlyData.map(data => `السنة ${data.year}`),
+            datasets: [{
+                label: 'قيمة الاستثمار',
+                data: yearlyData.map(data => data.value),
+                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color'),
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'نمو الاستثمار',
+                    font: {
+                        family: 'Saudi'
+                    }
+                }
+            }
+        }
+    });
+
+    // Dividend Growth Chart
+    const dividendCtx = document.getElementById('dividendChart').getContext('2d');
+    new Chart(dividendCtx, {
+        type: 'bar',
+        data: {
+            labels: yearlyData.map(data => `السنة ${data.year}`),
+            datasets: [{
+                label: 'الأرباح السنوية',
+                data: yearlyData.map(data => data.dividends),
+                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color'),
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'الأرباح السنوية',
+                    font: {
+                        family: 'Saudi'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    loadSettings();
+});
