@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة استثمار </title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>حاسبة استثمار </h2>
+
+        <div class="form-group">
+            <label>المبلغ الاستثماري (ريال):</label>
+            <input type="number" id="initial" value="180880">
+        </div>
+
+        <div class="form-group">
+            <label>سعر السهم الابتدائي (ريال):</label>
+            <input type="number" id="initialPrice" value="25">
+        </div>
+
+        <div class="form-group">
+            <label>توزيع أرباح سنوي لكل سهم (ريال):</label>
+            <input type="number" id="dividend" value="1.8216" step="0.0001">
+        </div>
+
+        <div class="form-group">
+            <label>نسبة ارتفاع سنوي في سعر السهم (%):</label>
+            <input type="number" id="growth" value="3" step="0.1">
+        </div>        <div class="form-group">
+            <label>إضافة شهرية (ريال):</label>
+            <input type="number" id="monthlyAddition" value="1000">
+        </div>
+
+        <div class="form-group">
+            <label>بداية الإضافة الشهرية من السنة:</label>
+            <input type="number" id="startYear" value="6" min="1">
+        </div>
+
+        <div class="form-group">
+            <label>مدة الاستثمار (بالسنوات):</label>
+            <input type="number" id="years" value="15">
+        </div>
+
+        <button onclick="calculate()">احسب</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
